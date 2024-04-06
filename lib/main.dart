@@ -25,46 +25,75 @@ class MapSample extends StatefulWidget {
 class MapSampleState extends State<MapSample> {
   late GoogleMapController mapController;
   final Set<Polygon> polygons = {};
-  final LatLng _center =
-      const LatLng(-34.603684, -58.381559); // Example location
   late final H3 h3;
+  final int _h3Resolution = 8; // Resolution of H3, adjust based on needs
 
   @override
   void initState() {
     super.initState();
     h3 = const H3Factory().load(); // Load the H3 instance
-    WidgetsBinding.instance?.addPostFrameCallback((_) => _addHexOverlay());
   }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
+    _addHexOverlay(); // Initial call to cover the map with hexes
+    mapController.addListener(_onMapChanged); // Add listener for map changes
   }
 
-  void _addHexOverlay() {
-    try {
-      BigInt h3Index = h3.geoToH3(
-          GeoCoord(lon: _center.longitude, lat: _center.latitude),
-          8); // Resolution
-      List<GeoCoord> boundary = h3.h3ToGeoBoundary(h3Index);
+  void _onMapChanged() {
+    // Debouncing or throttling this method could enhance performance
+    _addHexOverlay(); // Update the hex overlay based on the current map view
+  }
 
-      List<LatLng> polygonLatLngs = boundary.map((geoCoord) {
-        return LatLng(geoCoord.lat, geoCoord.lon); // Use 'lon' instead of 'lng'
-      }).toList();
+  Future<void> _addHexOverlay() async {
+    LatLngBounds bounds = await mapController.getVisibleRegion();
+    Set<BigInt> h3Indexes = _generateH3IndexesForBounds(bounds, _h3Resolution);
 
-      final polygon = Polygon(
-        polygonId: PolygonId(h3Index.toString()),
-        points: polygonLatLngs,
-        fillColor: Colors.red.withOpacity(0.5),
-        strokeWidth: 2,
-        strokeColor: Colors.red,
-      );
+    setState(() {
+      polygons.clear(); // Clear existing polygons to avoid overlay duplication
+      for (BigInt h3Index in h3Indexes) {
+        List<GeoCoord> boundary = h3.h3ToGeoBoundary(h3Index);
+        List<LatLng> polygonLatLngs = boundary
+            .map((geoCoord) => LatLng(geoCoord.lat, geoCoord.lon))
+            .toList();
 
-      setState(() {
+        final polygon = Polygon(
+          polygonId: PolygonId(h3Index.toString()),
+          points: polygonLatLngs,
+          fillColor: Colors.red.withOpacity(0.5),
+          strokeWidth: 2,
+          strokeColor: Colors.red,
+        );
+
         polygons.add(polygon);
-      });
-    } on H3Exception catch (e) {
-      debugPrint('Failed to add hex overlay: ${e.message}');
+      }
+    });
+  }
+
+  Set<BigInt> _generateH3IndexesForBounds(LatLngBounds bounds, int resolution) {
+    final northEast = bounds.northeast;
+    final southWest = bounds.southwest;
+
+    Set<BigInt> h3Indexes = {};
+    double latStep = (northEast.latitude - southWest.latitude) / 10;
+    double lngStep = (northEast.longitude - southWest.longitude) / 10;
+
+    for (double lat = southWest.latitude;
+        lat <= northEast.latitude;
+        lat += latStep) {
+      for (double lng = southWest.longitude;
+          lng <= northEast.longitude;
+          lng += lngStep) {
+        try {
+          BigInt h3Index = h3.geoToH3(GeoCoord(lon: lng, lat: lat), resolution);
+          h3Indexes.add(h3Index);
+        } catch (e) {
+          debugPrint("Error generating H3 index: $e");
+        }
+      }
     }
+
+    return h3Indexes;
   }
 
   @override
@@ -73,7 +102,7 @@ class MapSampleState extends State<MapSample> {
       body: GoogleMap(
         onMapCreated: _onMapCreated,
         initialCameraPosition: CameraPosition(
-          target: _center,
+          target: const LatLng(-34.603684, -58.381559), // Example location
           zoom: 11.0,
         ),
         polygons: polygons,
