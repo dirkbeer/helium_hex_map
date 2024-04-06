@@ -27,6 +27,7 @@ class MapSampleState extends State<MapSample> {
   final Set<Polygon> polygons = {};
   late final H3 h3;
   final int _h3Resolution = 8; // Resolution of H3, adjust based on needs
+  bool _isCameraMoving = false;
 
   @override
   void initState() {
@@ -36,13 +37,17 @@ class MapSampleState extends State<MapSample> {
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
-    _addHexOverlay(); // Initial call to cover the map with hexes
-    mapController.addListener(_onMapChanged); // Add listener for map changes
   }
 
-  void _onMapChanged() {
-    // Debouncing or throttling this method could enhance performance
-    _addHexOverlay(); // Update the hex overlay based on the current map view
+  void _onCameraMove(CameraPosition position) {
+    _isCameraMoving = true;
+  }
+
+  void _onCameraIdle() async {
+    if (_isCameraMoving) {
+      _isCameraMoving = false;
+      await _addHexOverlay();
+    }
   }
 
   Future<void> _addHexOverlay() async {
@@ -101,6 +106,8 @@ class MapSampleState extends State<MapSample> {
     return Scaffold(
       body: GoogleMap(
         onMapCreated: _onMapCreated,
+        onCameraMove: _onCameraMove,
+        onCameraIdle: _onCameraIdle,
         initialCameraPosition: CameraPosition(
           target: const LatLng(-34.603684, -58.381559), // Example location
           zoom: 11.0,
