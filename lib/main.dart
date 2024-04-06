@@ -63,12 +63,11 @@ class MapSampleState extends State<MapSample> {
             .toList();
 
         final polygon = Polygon(
-          polygonId: PolygonId(h3Index.toString()),
-          points: polygonLatLngs,
-          fillColor: Colors.red.withOpacity(0.5),
-          strokeWidth: 2,
-          strokeColor: Colors.red,
-        );
+            polygonId: PolygonId(h3Index.toString()),
+            points: polygonLatLngs,
+            fillColor: Colors.red.withOpacity(0.0),
+            strokeWidth: 2,
+            strokeColor: Colors.red.withOpacity(0.25));
 
         polygons.add(polygon);
       }
