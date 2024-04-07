@@ -30,7 +30,7 @@ class MapSampleState extends State<MapSample> {
   final Location location = Location();
   bool _serviceEnabled = false;
   PermissionStatus _permissionGranted = PermissionStatus.denied;
-  final int _h3Resolution = 8; // Adjust the resolution as needed
+  final int _h3Resolution = 11; // Adjust the resolution as needed
 
   @override
   void initState() {
@@ -56,13 +56,14 @@ class MapSampleState extends State<MapSample> {
       }
     }
 
-    location.onLocationChanged.listen((LocationData currentLocation) {
+    location.onLocationChanged.listen((LocationData currentLocation) async {
+      final currentZoomLevel = await mapController.getZoomLevel();
       mapController.animateCamera(
         CameraUpdate.newCameraPosition(
           CameraPosition(
             target:
                 LatLng(currentLocation.latitude!, currentLocation.longitude!),
-            zoom: 14.0,
+            zoom: currentZoomLevel,
           ),
         ),
       );
@@ -89,9 +90,9 @@ class MapSampleState extends State<MapSample> {
         final polygon = Polygon(
           polygonId: PolygonId(h3Index.toString()),
           points: polygonLatLngs,
-          fillColor: Colors.red.withOpacity(0.5),
+          fillColor: Colors.blue.withOpacity(0.0),
           strokeWidth: 2,
-          strokeColor: Colors.red,
+          strokeColor: Colors.blue.withOpacity(0.5),
         );
 
         polygons.add(polygon);
@@ -128,7 +129,7 @@ class MapSampleState extends State<MapSample> {
         onMapCreated: _onMapCreated,
         initialCameraPosition: const CameraPosition(
           target: LatLng(0.0, 0.0), // Will be updated to the user's location
-          zoom: 11.0,
+          zoom: 18.0,
         ),
         polygons: polygons,
       ),
