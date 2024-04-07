@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:h3_flutter/h3_flutter.dart';
+import 'package:location/location.dart';
 
 void main() => runApp(const MyApp());
 
 class MyApp extends StatelessWidget {
-  const MyApp({Key? key}) : super(key: key);
+  const MyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -16,7 +17,7 @@ class MyApp extends StatelessWidget {
 }
 
 class MapSample extends StatefulWidget {
-  const MapSample({Key? key}) : super(key: key);
+  const MapSample({super.key});
 
   @override
   State<MapSample> createState() => MapSampleState();
@@ -26,36 +27,59 @@ class MapSampleState extends State<MapSample> {
   late GoogleMapController mapController;
   final Set<Polygon> polygons = {};
   late final H3 h3;
-  final int _h3Resolution = 8; // Resolution of H3, adjust based on needs
-  bool _isCameraMoving = false;
+  final Location location = Location();
+  bool _serviceEnabled = false;
+  PermissionStatus _permissionGranted = PermissionStatus.denied;
+  final int _h3Resolution = 8; // Adjust the resolution as needed
 
   @override
   void initState() {
     super.initState();
     h3 = const H3Factory().load(); // Load the H3 instance
+    _initLocationService();
+  }
+
+  Future<void> _initLocationService() async {
+    _serviceEnabled = await location.serviceEnabled();
+    if (!_serviceEnabled) {
+      _serviceEnabled = await location.requestService();
+      if (!_serviceEnabled) {
+        return;
+      }
+    }
+
+    _permissionGranted = await location.hasPermission();
+    if (_permissionGranted == PermissionStatus.denied) {
+      _permissionGranted = await location.requestPermission();
+      if (_permissionGranted != PermissionStatus.granted) {
+        return;
+      }
+    }
+
+    location.onLocationChanged.listen((LocationData currentLocation) {
+      mapController.animateCamera(
+        CameraUpdate.newCameraPosition(
+          CameraPosition(
+            target:
+                LatLng(currentLocation.latitude!, currentLocation.longitude!),
+            zoom: 14.0,
+          ),
+        ),
+      );
+      _addHexOverlay(currentLocation);
+    });
   }
 
   void _onMapCreated(GoogleMapController controller) {
     mapController = controller;
   }
 
-  void _onCameraMove(CameraPosition position) {
-    _isCameraMoving = true;
-  }
-
-  void _onCameraIdle() async {
-    if (_isCameraMoving) {
-      _isCameraMoving = false;
-      await _addHexOverlay();
-    }
-  }
-
-  Future<void> _addHexOverlay() async {
+  Future<void> _addHexOverlay(LocationData currentLocation) async {
     LatLngBounds bounds = await mapController.getVisibleRegion();
     Set<BigInt> h3Indexes = _generateH3IndexesForBounds(bounds, _h3Resolution);
 
     setState(() {
-      polygons.clear(); // Clear existing polygons to avoid overlay duplication
+      polygons.clear();
       for (BigInt h3Index in h3Indexes) {
         List<GeoCoord> boundary = h3.h3ToGeoBoundary(h3Index);
         List<LatLng> polygonLatLngs = boundary
@@ -63,11 +87,12 @@ class MapSampleState extends State<MapSample> {
             .toList();
 
         final polygon = Polygon(
-            polygonId: PolygonId(h3Index.toString()),
-            points: polygonLatLngs,
-            fillColor: Colors.red.withOpacity(0.0),
-            strokeWidth: 2,
-            strokeColor: Colors.red.withOpacity(0.25));
+          polygonId: PolygonId(h3Index.toString()),
+          points: polygonLatLngs,
+          fillColor: Colors.red.withOpacity(0.5),
+          strokeWidth: 2,
+          strokeColor: Colors.red,
+        );
 
         polygons.add(polygon);
       }
@@ -88,12 +113,8 @@ class MapSampleState extends State<MapSample> {
       for (double lng = southWest.longitude;
           lng <= northEast.longitude;
           lng += lngStep) {
-        try {
-          BigInt h3Index = h3.geoToH3(GeoCoord(lon: lng, lat: lat), resolution);
-          h3Indexes.add(h3Index);
-        } catch (e) {
-          debugPrint("Error generating H3 index: $e");
-        }
+        BigInt h3Index = h3.geoToH3(GeoCoord(lon: lng, lat: lat), resolution);
+        h3Indexes.add(h3Index);
       }
     }
 
@@ -105,10 +126,8 @@ class MapSampleState extends State<MapSample> {
     return Scaffold(
       body: GoogleMap(
         onMapCreated: _onMapCreated,
-        onCameraMove: _onCameraMove,
-        onCameraIdle: _onCameraIdle,
-        initialCameraPosition: CameraPosition(
-          target: const LatLng(-34.603684, -58.381559), // Example location
+        initialCameraPosition: const CameraPosition(
+          target: LatLng(0.0, 0.0), // Will be updated to the user's location
           zoom: 11.0,
         ),
         polygons: polygons,
