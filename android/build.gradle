@@ -3,6 +3,16 @@ allprojects {
         google()
         mavenCentral()
     }
+
+    afterEvaluate { project ->
+        if (project.hasProperty('android')) {
+            project.android {
+                if (namespace == null) {
+                    namespace 'com.example.flutter_h3_map'
+                }
+            }
+        }
+    }
 }
 
 rootProject.buildDir = '../build'
