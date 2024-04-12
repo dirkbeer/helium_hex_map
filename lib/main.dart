@@ -40,6 +40,7 @@ class MapSampleState extends State<MapSample> {
   }
 
   Future<void> _initLocationService() async {
+    // Check for location service
     _serviceEnabled = await location.serviceEnabled();
     if (!_serviceEnabled) {
       _serviceEnabled = await location.requestService();
@@ -48,6 +49,7 @@ class MapSampleState extends State<MapSample> {
       }
     }
 
+    // Check for location permission
     _permissionGranted = await location.hasPermission();
     if (_permissionGranted == PermissionStatus.denied) {
       _permissionGranted = await location.requestPermission();
@@ -56,6 +58,11 @@ class MapSampleState extends State<MapSample> {
       }
     }
 
+    // Enable background mode for location updates
+    await location.enableBackgroundMode(
+        enable: true); // Added line for background location updates
+
+    // Listen for location changes
     location.onLocationChanged.listen((LocationData currentLocation) async {
       final currentZoomLevel = await mapController.getZoomLevel();
       mapController.animateCamera(
