@@ -8,7 +8,7 @@ allprojects {
         if (project.hasProperty('android')) {
             project.android {
                 if (namespace == null) {
-                    namespace 'tech.dirkbeer.flutter_h3_map'
+                    namespace 'tech.dirkbeer.helium_hex_map'
                 }
             }
         }

@@ -1,6 +1,6 @@
 {
-    "name": "flutter_h3_map",
-    "short_name": "flutter_h3_map",
+    "name": "helium_hex_map",
+    "short_name": "helium_hex_map",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",

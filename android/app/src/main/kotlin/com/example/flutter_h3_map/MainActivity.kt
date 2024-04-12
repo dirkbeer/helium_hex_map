@@ -1,4 +1,4 @@
-package com.example.flutter_h3_map
+package tech.dirkbeer.helium_hex_map
 
 import io.flutter.embedding.android.FlutterActivity
 

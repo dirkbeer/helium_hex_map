@@ -1,4 +1,4 @@
-# flutter_h3_map
+# helium_hex_map
 
 A new Flutter project.
 
