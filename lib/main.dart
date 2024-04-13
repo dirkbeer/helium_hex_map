@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:h3_flutter/h3_flutter.dart';
 import 'package:location/location.dart';
+import 'package:wakelock_plus/wakelock_plus.dart';
 
 void main() => runApp(const MyApp());
 
@@ -39,6 +40,13 @@ class MapSampleState extends State<MapSample> {
     super.initState();
     h3 = const H3Factory().load(); // Load the H3 instance
     _initLocationService();
+    WakelockPlus.enable();
+  }
+
+  @override
+  void dispose() {
+    WakelockPlus.disable();
+    super.dispose();
   }
 
   Future<void> _initLocationService() async {
@@ -102,17 +110,45 @@ class MapSampleState extends State<MapSample> {
     setState(() {
       polygons.clear();
       for (var record in hexRecords) {
+        final recordTime = record['time'] as DateTime;
+        final recordDuration = currentTime.difference(recordTime);
+        if (recordDuration.inMinutes > 15) {
+          record['status'] = 'counted';
+        }
+        if (recordDuration.inMinutes > 60) {
+          record['status'] = 'available';
+        }
+
         List<GeoCoord> boundary = h3.h3ToGeoBoundary(record['h3Index']);
         List<LatLng> polygonLatLngs = boundary
             .map((geoCoord) => LatLng(geoCoord.lat, geoCoord.lon))
             .toList();
 
+        Color fillColor;
+        Color strokeColor;
+        int strokeWidth;
+        // Default style (should never show)
+        fillColor = Colors.grey.withOpacity(0.5);
+        strokeColor = Colors.grey.withOpacity(0.8);
+        strokeWidth = 2;
+        // Set color based on status
+        if (record['status'] == 'current') {
+          fillColor = Colors.blue.withOpacity(0.5); // Current location
+          strokeColor = Colors.blue.withOpacity(0.8);
+        } else if (record['status'] == 'counted') {
+          fillColor = Colors.green.withOpacity(0.5); // Available location
+          strokeColor = Colors.green.withOpacity(0.8);
+        } else if (record['status'] == 'available') {
+          fillColor = Colors.green.withOpacity(0.25); // Available location
+          strokeWidth = 0;
+        }
+
         final polygon = Polygon(
           polygonId: PolygonId(record['h3Index'].toString()),
           points: polygonLatLngs,
-          fillColor: Colors.blue.withOpacity(0.5), // Adjust opacity as needed
-          strokeWidth: 2,
-          strokeColor: Colors.blue,
+          fillColor: fillColor, // Adjust opacity as needed
+          strokeWidth: strokeWidth,
+          strokeColor: strokeColor,
         );
 
         polygons.add(polygon);
@@ -130,6 +166,8 @@ class MapSampleState extends State<MapSample> {
           zoom: 18.0,
         ),
         polygons: polygons,
+        myLocationEnabled: true,
+        myLocationButtonEnabled: false,
       ),
     );
   }
