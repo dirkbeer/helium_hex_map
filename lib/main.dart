@@ -31,6 +31,8 @@ class MapSampleState extends State<MapSample> {
   bool _serviceEnabled = false;
   PermissionStatus _permissionGranted = PermissionStatus.denied;
   final int _h3Resolution = 11; // Adjust the resolution as needed
+  final List<Map<String, dynamic>> hexRecords =
+      []; // Data structure to hold hex records
 
   @override
   void initState() {
@@ -74,7 +76,7 @@ class MapSampleState extends State<MapSample> {
           ),
         ),
       );
-      _addHexOverlay(currentLocation);
+      _addHexRecordAndOverlay(currentLocation);
     });
   }
 
@@ -82,51 +84,40 @@ class MapSampleState extends State<MapSample> {
     mapController = controller;
   }
 
-  Future<void> _addHexOverlay(LocationData currentLocation) async {
-    LatLngBounds bounds = await mapController.getVisibleRegion();
-    Set<BigInt> h3Indexes = _generateH3IndexesForBounds(bounds, _h3Resolution);
+  Future<void> _addHexRecordAndOverlay(LocationData currentLocation) async {
+    final h3Index = h3.geoToH3(
+        GeoCoord(
+            lon: currentLocation.longitude!, lat: currentLocation.latitude!),
+        _h3Resolution);
+    final currentTime = DateTime.now();
 
+    // Add a new record for the current location
+    hexRecords.add({
+      'h3Index': h3Index,
+      'time': currentTime,
+      'status': 'current',
+    });
+
+    // Clear existing polygons and create new ones based on hexRecords
     setState(() {
       polygons.clear();
-      for (BigInt h3Index in h3Indexes) {
-        List<GeoCoord> boundary = h3.h3ToGeoBoundary(h3Index);
+      for (var record in hexRecords) {
+        List<GeoCoord> boundary = h3.h3ToGeoBoundary(record['h3Index']);
         List<LatLng> polygonLatLngs = boundary
             .map((geoCoord) => LatLng(geoCoord.lat, geoCoord.lon))
             .toList();
 
         final polygon = Polygon(
-          polygonId: PolygonId(h3Index.toString()),
+          polygonId: PolygonId(record['h3Index'].toString()),
           points: polygonLatLngs,
-          fillColor: Colors.blue.withOpacity(0.0),
+          fillColor: Colors.blue.withOpacity(0.5), // Adjust opacity as needed
           strokeWidth: 2,
-          strokeColor: Colors.blue.withOpacity(0.5),
+          strokeColor: Colors.blue,
         );
 
         polygons.add(polygon);
       }
     });
-  }
-
-  Set<BigInt> _generateH3IndexesForBounds(LatLngBounds bounds, int resolution) {
-    final northEast = bounds.northeast;
-    final southWest = bounds.southwest;
-
-    Set<BigInt> h3Indexes = {};
-    double latStep = (northEast.latitude - southWest.latitude) / 10;
-    double lngStep = (northEast.longitude - southWest.longitude) / 10;
-
-    for (double lat = southWest.latitude;
-        lat <= northEast.latitude;
-        lat += latStep) {
-      for (double lng = southWest.longitude;
-          lng <= northEast.longitude;
-          lng += lngStep) {
-        BigInt h3Index = h3.geoToH3(GeoCoord(lon: lng, lat: lat), resolution);
-        h3Indexes.add(h3Index);
-      }
-    }
-
-    return h3Indexes;
   }
 
   @override
