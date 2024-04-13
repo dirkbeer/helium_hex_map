@@ -32,9 +32,11 @@ class MapSampleState extends State<MapSample> {
   bool _serviceEnabled = false;
   PermissionStatus _permissionGranted = PermissionStatus.denied;
   final int _h3Resolution = 11; // Adjust the resolution as needed
-  final List<Map<String, dynamic>> hexRecords =
+  List<Map<String, dynamic>> hexRecords =
       []; // Data structure to hold hex records
   double _currentAccuracy = 0.0;
+  double _requiredAccuracy = 10.0;
+  int _hexCount = 0;
 
   @override
   void initState() {
@@ -85,10 +87,13 @@ class MapSampleState extends State<MapSample> {
           ),
         ),
       );
-      _addHexRecordAndOverlay(currentLocation);
       setState(() {
         _currentAccuracy = currentLocation.accuracy!;
       });
+      // count and display hex only if accuracy is better than 10 meters
+      if (_currentAccuracy < _requiredAccuracy) {
+        _addHexRecordAndOverlay(currentLocation);
+      }
     });
   }
 
@@ -103,17 +108,23 @@ class MapSampleState extends State<MapSample> {
         _h3Resolution);
     final currentTime = DateTime.now();
 
-    // Add a new record for the current location
-    hexRecords.add({
-      'h3Index': h3Index,
-      'time': currentTime,
-      'status': 'current',
-    });
+    // Add a new record for the current location or overwrite if it exists
+    hexRecords = [
+      for (var record in hexRecords)
+        if (record['h3Index'] == h3Index)
+          {'h3Index': h3Index, 'time': currentTime, 'status': 'current'}
+        else
+          record,
+      if (!hexRecords.any((record) => record['h3Index'] == h3Index))
+        {'h3Index': h3Index, 'time': currentTime, 'status': 'current'},
+    ];
 
     // Clear existing polygons and create new ones based on hexRecords
     setState(() {
       polygons.clear();
+      _hexCount = 0;
       for (var record in hexRecords) {
+        _hexCount += 1;
         final recordTime = record['time'] as DateTime;
         final recordDuration = currentTime.difference(recordTime);
         if (recordDuration.inMinutes > 15) {
@@ -177,17 +188,61 @@ class MapSampleState extends State<MapSample> {
             myLocationButtonEnabled: false,
           ),
           Positioned(
-            left: 10,
+            left: 30,
             bottom: 10,
             child: Container(
+              width: 300,
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               color: Colors.white.withOpacity(0.8),
-              child: Text(
-                'Accuracy: ${_currentAccuracy.toStringAsFixed(1)}m',
-                style: const TextStyle(
-                  fontSize: 16,
-                  color: Colors.black,
-                ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Hex count: $_hexCount',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    'Accuracy: ${_currentAccuracy.toStringAsFixed(1)}m',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Text(
+                    'Accuracy required: ${_requiredAccuracy.toStringAsFixed(0)}m',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      color: Colors.black,
+                    ),
+                  ),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment
+                        .spaceBetween, // Ensure the children are spaced out evenly.
+                    children: [
+                      Expanded(
+                        child: SliderTheme(
+                          data: SliderTheme.of(context).copyWith(
+                            showValueIndicator: ShowValueIndicator.never,
+                          ),
+                          child: Slider(
+                            min: 0.0,
+                            max: 30.0,
+                            divisions: 30,
+                            value: _requiredAccuracy,
+                            onChanged: (double value) {
+                              setState(() {
+                                _requiredAccuracy = value;
+                              });
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
