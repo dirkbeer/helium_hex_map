@@ -34,6 +34,7 @@ class MapSampleState extends State<MapSample> {
   final int _h3Resolution = 11; // Adjust the resolution as needed
   final List<Map<String, dynamic>> hexRecords =
       []; // Data structure to hold hex records
+  double _currentAccuracy = 0.0;
 
   @override
   void initState() {
@@ -85,6 +86,9 @@ class MapSampleState extends State<MapSample> {
         ),
       );
       _addHexRecordAndOverlay(currentLocation);
+      setState(() {
+        _currentAccuracy = currentLocation.accuracy!;
+      });
     });
   }
 
@@ -159,15 +163,35 @@ class MapSampleState extends State<MapSample> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: GoogleMap(
-        onMapCreated: _onMapCreated,
-        initialCameraPosition: const CameraPosition(
-          target: LatLng(0.0, 0.0), // Will be updated to the user's location
-          zoom: 18.0,
-        ),
-        polygons: polygons,
-        myLocationEnabled: true,
-        myLocationButtonEnabled: false,
+      body: Stack(
+        children: [
+          GoogleMap(
+            onMapCreated: _onMapCreated,
+            initialCameraPosition: const CameraPosition(
+              target:
+                  LatLng(0.0, 0.0), // Will be updated to the user's location
+              zoom: 18.0,
+            ),
+            polygons: polygons,
+            myLocationEnabled: true,
+            myLocationButtonEnabled: false,
+          ),
+          Positioned(
+            left: 10,
+            bottom: 10,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              color: Colors.white.withOpacity(0.8),
+              child: Text(
+                'Accuracy: ${_currentAccuracy.toStringAsFixed(1)}m',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: Colors.black,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
