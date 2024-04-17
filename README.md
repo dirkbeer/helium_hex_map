@@ -12,7 +12,7 @@ _Blue_ hexes are hexes you've visited in the last 15 minutes.
 
 _Green_ hexes are at least 15 minutes old and should have increased the count in your Mapping Feed (if no one else has mapped them).
 
-_Green transparent_ hexes are hexes that are out of the 60 minute cooldown period.
+_Green transparent_ hexes are hexes that are out of the 60 minute cooldown period and can be remapped.
 
 ## Limitations
 
