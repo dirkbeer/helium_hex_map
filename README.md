@@ -22,6 +22,6 @@ As far as I know, Helium doesn't disclose the exact criteria for counting a hex.
 
 ## Installation
 
-1. Download the app-debug.apk to your phone
+1. Download the [app-debug.apk](https://github.com/dirkbeer/helium_hex_map/releases/tag/v0.1.0-alpha) to your phone
 2. Find it using Files
 3. Tap to install
