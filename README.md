@@ -10,9 +10,9 @@ Displays a map at your location and updates it as you move. If the location has 
 
 Blue hexes are hexes you've visited in the last 15 minutes.
 
-Green hexes are hexes that should be counted in your Mapping Feed (if no one else has mapped them).
+Green hexes are hexes that should have been by Helium in your Mapping Feed (if no one else has mapped them).
 
-Green transparent hexes are hexes you can revisit since they are out of the 60 minute cooldown period.
+Green transparent hexes are hexes that are out of the 60 minute cooldown period.
 
 ## Limitations
 
