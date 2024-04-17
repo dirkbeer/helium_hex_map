@@ -1,6 +1,6 @@
 # helium_hex_map
 
-Shows Helium Mobile Discovery Mapping hexes that you have visited. Currently for Android only.
+Shows Helium Mobile Discovery Mapping hexes that you have visited. A draft / alpha / debug version, a coding excercise for me, currently for Android only.
 
 <img src="https://github.com/dirkbeer/flutter_h3_map/assets/6425332/59bc602f-60fc-4e7f-9f63-2b801255f45e" height="300">
 
