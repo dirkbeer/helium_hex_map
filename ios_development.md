@@ -1,4 +1,6 @@
-1. You will need an iPhone and a computer with Mac OS. If developing on Windows or Linux, you can use a docker container [Docker-OSX](https://github.com/sickcodes/Docker-OS)
+# Developing iOS apps
+
+1. You will need an iPhone and a computer with Mac OS. If developing on Windows or Linux, you can use a docker container instead of a real Mac OS machine [Docker-OSX](https://github.com/sickcodes/Docker-OS)
  
 1.1 Install docker [for Ubuntu 22.04](https://www.digitalocean.com/community/tutorials/how-to-install-and-use-docker-on-ubuntu-22-04)
 
