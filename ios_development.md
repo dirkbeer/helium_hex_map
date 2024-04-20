@@ -25,3 +25,15 @@ sudo gem install cocoapods
 sudo sh -c 'xcode-select -s /Applications/Xcode.app/Contents/Developer && xcodebuild -runFirstLaunch'
 sudo xcodebuild -license
 ```
+
+5. Set up iPhone passthrough to the docker-osx
+   
+5.1 Install prerequisites
+```
+sudo apt install usbmuxd socat
+https://github.com/corellium/usbfluxd/releases/download/v1.0/usbfluxd-aarch64-libc6-libdbus13.tar.gz
+cd usbfluxd-aarch64-libc6-libdbus13/
+sudo cp usbflux* /usr/local/sbin/
+nano ~/.bashrc
+export PATH="/usr/local/sbin:$PATH"
+```
