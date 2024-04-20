@@ -26,14 +26,19 @@ sudo sh -c 'xcode-select -s /Applications/Xcode.app/Contents/Developer && xcodeb
 sudo xcodebuild -license
 ```
 
-5. Set up iPhone passthrough to the docker-osx
+5. Set up iPhone passthrough to the docker-osx supplement to instructions [here](https://github.com/sickcodes/Docker-OSX?tab=readme-ov-file#connect-to-a-host-running-usbfluxd)
    
-5.1 Install prerequisites
+5.1 Install prerequisites on host machine
 ```
 sudo apt install usbmuxd socat
-https://github.com/corellium/usbfluxd/releases/download/v1.0/usbfluxd-aarch64-libc6-libdbus13.tar.gz
+wget https://github.com/corellium/usbfluxd/releases/download/v1.0/usbfluxd-x86_64-libc6-libdbus13.tar.gz
 cd usbfluxd-aarch64-libc6-libdbus13/
 sudo cp usbflux* /usr/local/sbin/
 nano ~/.bashrc
 export PATH="/usr/local/sbin:$PATH"
 ```
+5.2 Set up usb passthrough on docker-osx. [Install homebrew](https://osxdaily.com/2022/12/28/how-to-install-homebrew-on-macos-ventura/)
+
+6. Trust yourself as developer
+   Settings -> General -> VPN & Device Management
+
